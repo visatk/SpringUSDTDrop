@@ -8,6 +8,7 @@ export interface Env {
 
 export interface MyContext extends Context {
 	env: Env;
+	executionCtx: ExecutionContext;
 }
 
 export interface UserRow {
@@ -25,6 +26,7 @@ export interface WithdrawalRow {
 	id: number;
 	user_id: number;
 	amount: number;
+	wallet: string;
 	tx_hash: string;
 	status: string;
 }
