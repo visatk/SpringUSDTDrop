@@ -1,4 +1,4 @@
-import { Env, UserRow } from '../types';
+import { Env, UserRow, WithdrawalRow } from '../types';
 
 export class DBManager {
 	constructor(private db: D1Database) {}
@@ -14,12 +14,11 @@ export class DBManager {
 			.run();
 	}
 
-	async updateState(userId: number, state: string) {
-		await this.db.prepare('UPDATE users SET state = ? WHERE id = ?').bind(state, userId).run();
+	async updateState(userId: number, state: string, tempData: string | null = null) {
+		await this.db.prepare('UPDATE users SET state = ?, temp_data = ? WHERE id = ?').bind(state, tempData, userId).run();
 	}
 
 	async saveWalletAndReward(userId: number, wallet: string, bonusAmount: number) {
-		// Update wallet, add bonus if balance is 0 (first time), and reset state
 		await this.db
 			.prepare(`UPDATE users SET wallet_address = ?, state = 'idle', balance = balance + CASE WHEN balance = 0 THEN ? ELSE 0 END WHERE id = ?`)
 			.bind(wallet, bonusAmount, userId)
@@ -33,5 +32,38 @@ export class DBManager {
 	async getReferralCount(userId: number): Promise<number> {
 		const result = await this.db.prepare('SELECT COUNT(*) as count FROM users WHERE referred_by = ?').bind(userId).first<{ count: number }>();
 		return result?.count || 0;
+	}
+
+	async createWithdrawal(userId: number, amount: number, txHash: string): Promise<number> {
+		const batch = await this.db.batch([
+            this.db.prepare('INSERT INTO withdrawals (user_id, amount, tx_hash) VALUES (?, ?, ?) RETURNING id').bind(userId, amount, txHash),
+            this.db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').bind(amount, userId)
+        ]);
+        const result = batch[0].results[0] as { id: number };
+        return result.id;
+	}
+
+	async getWithdrawal(id: number): Promise<WithdrawalRow | null> {
+		return await this.db.prepare('SELECT * FROM withdrawals WHERE id = ?').bind(id).first<WithdrawalRow>();
+	}
+
+	async updateWithdrawalStatus(id: number, status: string) {
+		await this.db.prepare('UPDATE withdrawals SET status = ? WHERE id = ?').bind(status, id).run();
+	}
+
+	async refundBalance(userId: number, amount: number) {
+		await this.db.prepare('UPDATE users SET balance = balance + ? WHERE id = ?').bind(amount, userId).run();
+	}
+
+	async getStats() {
+		const users = await this.db.prepare('SELECT COUNT(*) as c FROM users').first<{c:number}>();
+		const balance = await this.db.prepare('SELECT SUM(balance) as s FROM users').first<{s:number}>();
+		const withdrawals = await this.db.prepare('SELECT COUNT(*) as c FROM withdrawals WHERE status = "approved"').first<{c:number}>();
+		return { totalUsers: users?.c || 0, totalBalance: balance?.s || 0, approvedWithdrawals: withdrawals?.c || 0 };
+	}
+
+	async getAllUserIds(): Promise<number[]> {
+		const result = await this.db.prepare('SELECT id FROM users').all<{ id: number }>();
+		return result.results.map(r => r.id);
 	}
 }
