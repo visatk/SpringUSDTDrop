@@ -1,6 +1,7 @@
 export const MESSAGES = {
 	WELCOME: `🎁 *Welcome to The Biggest Spring USDT Airdrop* 🌸\n\nCelebrate the season of new beginnings with our massive USDT giveaway.\n\n🌷 *Spring Bonus:* 30 USDT — just for joining\n🌿 *Referral Bloom:* 8 USDT for every friend you bring\n\nTap ✅ *Continue* below to bloom your rewards.`,
 	ASK_WALLET: `🔄 *Wallet reset.*\n\n📦 Please enter your *USDT wallet address (BEP-20 only)*:`,
+	ASK_WITHDRAW_WALLET: `🔘 *Please submit your USDT (BEP-20, TRC-20, ERC-20, BASE) wallet address below.*\n\nMust Submit Valid Wallet Address from any network.`,
 	WALLET_SAVED: `✅ *Wallet saved!*\n\n👛 {wallet}\n\nTo change your wallet later, use /start`,
 	DASHBOARD: `🏠 *Dashboard*\n\nHey {name}, welcome back!\n\n💰 *Balance:* {balance} USDT\n👥 *Referrals:* {refs}`,
 	REFERRAL: `🔗 *Your Referral Link:*\n\`https://t.me/{bot_username}?start={user_id}\`\n\nShare this link to earn 8 USDT per friend!`,
@@ -11,7 +12,7 @@ export const MESSAGES = {
 	WITHDRAW_PENDING: `⏳ *Withdrawal Request Submitted!*\n\nYour transaction hash: \`{tx_hash}\`\nAdmin will verify your gas fee payment and approve the withdrawal shortly.`,
 	WITHDRAW_APPROVED: `🎉 *Withdrawal Approved!*\n\nYour {amount} USDT has been successfully sent to your wallet.`,
 	WITHDRAW_REJECTED: `❌ *Withdrawal Rejected!*\n\nInvalid transaction fee or hash. Your balance has been refunded. Please contact support.`,
-	ADMIN_NEW_WITHDRAWAL: `🚨 *New Withdrawal Request*\n\nUser: [{name}](tg://user?id={user_id})\nID: \`{user_id}\`\nAmount: {amount} USDT\nWallet: \`{wallet}\`\nTx Hash: \`{tx_hash}\`\n\nPlease approve or reject:`,
+	ADMIN_NEW_WITHDRAWAL: `🚨 *New Withdrawal Request*\n\nUser: [{name}](tg://user?id={user_id})\nID: \`{user_id}\`\nAmount: {amount} USDT\nWithdrawal Wallet: \`{wallet}\`\nTx Hash: \`{tx_hash}\`\n\nPlease approve or reject:`,
 	INVALID_WALLET: `❌ *Invalid Format!*\nPlease enter a valid BEP-20 (0x...) wallet address.`,
 	CANCELLED: `✅ *Action Cancelled.*`
 };
