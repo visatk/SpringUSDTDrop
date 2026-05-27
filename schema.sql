@@ -11,11 +11,14 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_referred_by ON users(referred_by);
+
 DROP TABLE IF EXISTS withdrawals;
 CREATE TABLE withdrawals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     amount REAL,
+    wallet TEXT,
     tx_hash TEXT,
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
