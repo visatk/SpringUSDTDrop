@@ -19,9 +19,10 @@ export class DBManager {
 	}
 
 	async saveWalletAndReward(userId: number, wallet: string, bonusAmount: number) {
+		// Secure Bonus Distribution: Only applies if wallet is NULL (first time)
 		await this.db
-			.prepare(`UPDATE users SET wallet_address = ?, state = 'idle', balance = balance + CASE WHEN balance = 0 THEN ? ELSE 0 END WHERE id = ?`)
-			.bind(wallet, bonusAmount, userId)
+			.prepare(`UPDATE users SET balance = balance + CASE WHEN wallet_address IS NULL THEN ? ELSE 0 END, wallet_address = ?, state = 'idle' WHERE id = ?`)
+			.bind(bonusAmount, wallet, userId)
 			.run();
 	}
 
@@ -34,13 +35,19 @@ export class DBManager {
 		return result?.count || 0;
 	}
 
-	async createWithdrawal(userId: number, amount: number, txHash: string): Promise<number> {
-		const batch = await this.db.batch([
-            this.db.prepare('INSERT INTO withdrawals (user_id, amount, tx_hash) VALUES (?, ?, ?) RETURNING id').bind(userId, amount, txHash),
-            this.db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').bind(amount, userId)
-        ]);
-        const result = batch[0].results[0] as { id: number };
-        return result.id;
+	async createWithdrawal(userId: number, amount: number, txHash: string, wallet: string): Promise<number | null> {
+		// Atomic condition strictly blocks Double-Spending 
+		const deductQuery = await this.db.prepare(
+			'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?'
+		).bind(amount, userId, amount).run();
+
+		if (deductQuery.meta.changes === 0) return null; // Balance insufficient at exact microsecond
+
+		const insertQuery = await this.db.prepare(
+			'INSERT INTO withdrawals (user_id, amount, wallet, tx_hash) VALUES (?, ?, ?, ?) RETURNING id'
+		).bind(userId, amount, wallet, txHash).first<{ id: number }>();
+		
+		return insertQuery?.id || null;
 	}
 
 	async getWithdrawal(id: number): Promise<WithdrawalRow | null> {
